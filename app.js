@@ -42,11 +42,25 @@ device
         var jsonobj = payload.toString();
         var myObj = JSON.parse(jsonobj);
         currentNumber = myObj.Count;
-        console.log('============currentNumber===========');
+        console.log('****currentNumber*****');
         console.log(currentNumber);
-        console.log('====================================');
+        console.log('***********************');
     });
 
+
+
+// Initialize wifi module
+// Absolutely necessary even to set interface to null
+// wifi.init({
+//     iface: null // network interface, choose a random wifi interface if set to null
+// });
+
+// // Connect to a network
+// wifi.connect({ ssid: 'Sahil', password: '12345678' }, () => {
+//     console.log('Wifi Connected');
+//     // on windows, the callback is called even if the connection failed due to netsh limitations
+//     // if your software may work on windows, you should use `wifi.getCurrentConnections` to check if the connection succeeded
+// });
 
 
 // create helper middleware so we can reuse server-sent events
@@ -68,7 +82,6 @@ const useServerSentEventsMiddleware = (req, res, next) => {
     Object.assign(res, {
         sendEventStreamData
     });
-
     next();
 }
 

@@ -2,13 +2,13 @@ const axios = require('axios');
 var fs = require('fs');
 const moment = require('moment');
 
-let getUserCount = () => {
+let getUserCount = (device) => {
     return new Promise((resolve, reject) => {
         axios
             .post('https://3366oiq0z6.execute-api.eu-central-1.amazonaws.com/default/Storing_data_dynamodb', {
                 "TableName": "QMS_Device",
                 "Data": "",
-                "Find": "sahilshop1_9829873696_App" //App details goes here
+                "Find": device //App details goes here
             })
             .then(function (response) {
                 let userNumber = 0
@@ -32,13 +32,13 @@ let getUserCount = () => {
     })
 }
 
-let getOfflineCount = () => {
+let getOfflineCount = (device) => {
     return new Promise((resolve, reject) => {
         axios
             .post('https://3366oiq0z6.execute-api.eu-central-1.amazonaws.com/default/Storing_data_dynamodb', {
                 "TableName": "QMS_Device",
                 "Data": "",
-                "Find": "sahilshop1_9829873696_Device" //Device details goes here
+                "Find": device //Device details goes here
             })
             .then(function (response) {
                 if (response.data) {
@@ -57,18 +57,19 @@ let createDevice = (device) => {
     return new Promise((resolve, reject) => {
         axios
             .post('https://t5aa275v2j.execute-api.eu-central-1.amazonaws.com/default/Smart_bell_lambda', {
-                "Device": device //Device Name goes here
+                "Action": "create",
+                "Device": device
             })
             .then(function (res) {
                 console.log(`statusCode: ${res.status}`);
                 //Certificate File Generation
-                fs.writeFile('./assets/deviceCreation/certificate.pem.crt', res.data.files[0][device].certificatePem, function (err) {
+                fs.writeFile(`./assets/deviceCreation/${device}_certificate.pem.crt`, res.data.files[0][device].certificatePem, function (err) {
                     if (err) throw err;
                     console.log('Saved certificate');
                 });
 
                 //Private Key File
-                fs.writeFile('./assets/deviceCreation/private.pem.key', res.data.files[0][device].keyPair.PrivateKey, function (err) {
+                fs.writeFile(`./assets/deviceCreation/${device}_private.pem.key`, res.data.files[0][device].keyPair.PrivateKey, function (err) {
                     if (err) throw err;
                     console.log('Saved private key');
                 });
@@ -95,9 +96,30 @@ let sendDataToServer = (userDetails) => {
         .catch(err => console.log(err))
 }
 
+let getDeviceList = (user) => {
+    return new Promise((resolve, reject) => {
+        axios
+            .post('https://t5aa275v2j.execute-api.eu-central-1.amazonaws.com/default/Smart_bell_lambda', {
+                "Device": user,
+                "Action": "get_list"
+            })
+            .then(function (response) {
+                if (response.data) {
+                    return resolve(response?.data.files);
+                }
+            })
+            .catch(function (error) {
+                console.log(error);
+                return reject(error);
+            });
+    })
+}
+
+
 module.exports = {
     getUserCount,
     getOfflineCount,
     createDevice,
     sendDataToServer,
+    getDeviceList,
 }

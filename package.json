@@ -23,6 +23,7 @@
     "express-validator": "^6.4.0",
     "moment": "^2.29.3",
     "morgan": "^1.10.0",
+    "node-wifi": "^2.0.16",
     "npm": "^6.14.7",
     "path": "^0.12.7",
     "rotating-file-stream": "^3.0.3",

@@ -1,12 +1,13 @@
 const Message = require('../constants/error-message')
 const MessageCode = require('../constants/status-message')
-const { getUserCount, createDevice, sendDataToServer, getOfflineCount } = require('../modules')
+const { getUserCount, createDevice, sendDataToServer, getOfflineCount, getDeviceList } = require('../modules')
 const { Response } = require('../utils')
 const moment = require('moment');
 
 module.exports.userCount = async (req, res) => {
     try {
-        const userCount = await getUserCount()
+        const { device } = req.params
+        const userCount = await getUserCount(device)
         return Response.commonResponse(res, MessageCode.SUCCESS, Message.SUCCESS, userCount)
     } catch (e) {
         console.log(e);
@@ -16,7 +17,8 @@ module.exports.userCount = async (req, res) => {
 
 module.exports.offlineCount = async (req, res) => {
     try {
-        const offlineCount = await getOfflineCount()
+        const { device } = req.params
+        const offlineCount = await getOfflineCount(device)
         return Response.commonResponse(res, MessageCode.SUCCESS, Message.SUCCESS, offlineCount)
     } catch (e) {
         console.log(e);
@@ -49,6 +51,35 @@ module.exports.sendDataToServer = async (req, res) => {
         userDetails.count = Number(userCount) + 1
         await sendDataToServer(userDetails)
         return Response.commonResponse(res, MessageCode.SUCCESS, Message.DETAILS_OBTAINED, userCount)
+    } catch (e) {
+        console.log(e);
+        return Response.commonResponse(res, MessageCode.INTERNAL_ERROR, Message.INTERNAL_SERVER)
+    }
+}
+
+module.exports.getDeviceList = async (req, res) => {
+    try {
+        let user = req.params.user
+        // let deviceList = []
+        // let queueList = []
+        const fetchList = await getDeviceList(user)
+
+        // if (fetchList && fetchList.length) {
+        //     fetchList.forEach(element => {
+        //         const device = element.slice(
+        //             element.indexOf('__') + 1,
+        //             element.lastIndexOf('--'),
+        //         );
+        //         deviceList.push(device)
+        //         const queue = element.slice(
+        //             element.indexOf('--') + 1,
+        //             element.lastIndexOf('.'),
+        //         );
+        //         queueList.push(queue)
+        //     });
+        // }
+
+        return Response.commonResponse(res, MessageCode.SUCCESS, Message.SUCCESS, fetchList)
     } catch (e) {
         console.log(e);
         return Response.commonResponse(res, MessageCode.INTERNAL_ERROR, Message.INTERNAL_SERVER)
