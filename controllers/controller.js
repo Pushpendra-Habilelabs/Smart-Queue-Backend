@@ -1,6 +1,6 @@
 const Message = require('../constants/error-message')
 const MessageCode = require('../constants/status-message')
-const { getUserCount, createDevice, sendDataToServer, getOfflineCount, getDeviceList } = require('../modules')
+const { getUserCount, createDevice, sendDataToServer, getDeviceList, getOfflineCount, getTotalCount } = require('../modules')
 const { Response } = require('../utils')
 const moment = require('moment');
 
@@ -18,7 +18,7 @@ module.exports.userCount = async (req, res) => {
 module.exports.offlineCount = async (req, res) => {
     try {
         const { device } = req.params
-        const offlineCount = await getOfflineCount(device)
+        const offlineCount = await getUserCount(device)
         return Response.commonResponse(res, MessageCode.SUCCESS, Message.SUCCESS, offlineCount)
     } catch (e) {
         console.log(e);
@@ -46,8 +46,12 @@ module.exports.sendDataToServer = async (req, res) => {
         if (!userDetails) {
             return Response.commonResponse(res, MessageCode.BAD_REQUEST, Message.BAD_REQUEST)
         }
-        const userCount = await getUserCount()
-        userDetails.timeStamp = moment(new Date()).format('YYYY-M-DD/HH:mm:ss')
+        let userCount = await getUserCount(userDetails.deviceName)
+        userCount = Number(userCount)
+        if (userCount > 1) {
+            userCount + 1
+        }
+        userDetails.timeStamp = moment(new Date()).format('YYYY-MM-DD/HH:mm:ss')
         userDetails.count = Number(userCount) + 1
         await sendDataToServer(userDetails)
         return Response.commonResponse(res, MessageCode.SUCCESS, Message.DETAILS_OBTAINED, userCount)
@@ -86,3 +90,13 @@ module.exports.getDeviceList = async (req, res) => {
     }
 }
 
+module.exports.getTotalCount = async (req, res) => {
+    try {
+        const { device } = req.params
+        const offlineCount = await getTotalCount(device)
+        return Response.commonResponse(res, MessageCode.SUCCESS, Message.SUCCESS, offlineCount)
+    } catch (e) {
+        console.log(e);
+        return Response.commonResponse(res, MessageCode.INTERNAL_ERROR, Message.INTERNAL_SERVER)
+    }
+}

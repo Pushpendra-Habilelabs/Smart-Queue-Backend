@@ -8,17 +8,19 @@ let getUserCount = (device) => {
             .post('https://3366oiq0z6.execute-api.eu-central-1.amazonaws.com/default/Storing_data_dynamodb', {
                 "TableName": "QMS_Device",
                 "Data": "",
-                "Find": device //App details goes here
+                "Find": `${device}_Device` //App details goes here
             })
             .then(function (response) {
                 let userNumber = 0
                 if (response.data.Data && response.data?.Data.length) {
                     let date = response.data.Data[0].Date_Time.S.split('/')[0]
-                    if (date.toString().trim() == moment(new Date()).format('YYYY-M-DD').toString().trim()) {
+                    if (date.toString().trim() == moment(new Date()).format('YYYY-MM-DD').toString().trim()) {
+                        console.log('same day');
                         userNumber = response.data.Data[0].Count.N
                         return resolve(Number(userNumber));
                     }
                     else {
+                        console.log('new day');
                         return resolve(userNumber)
                     }
                 }
@@ -32,23 +34,32 @@ let getUserCount = (device) => {
     })
 }
 
-let getOfflineCount = (device) => {
+let getTotalCount = (device) => {
     return new Promise((resolve, reject) => {
         axios
             .post('https://3366oiq0z6.execute-api.eu-central-1.amazonaws.com/default/Storing_data_dynamodb', {
                 "TableName": "QMS_Device",
                 "Data": "",
-                "Find": device //Device details goes here
+                "Find": `${device}_App` //Device details goes here
             })
             .then(function (response) {
-                if (response.data) {
-                    let offlineNumber = response.data.Data[0]?.Count.N
-                    return resolve(offlineNumber);
+                let offlineNo = 0
+                if (response.data.Data && response.data?.Data.length) {
+                    let date = response.data.Data[0].Date_Time.S.split('/')[0]
+                    if (date.toString().trim() == moment(new Date()).format('YYYY-MM-DD').toString().trim()) {
+                        offlineNo = response.data.Data[0].Count.N
+                        return resolve(Number(offlineNo));
+                    }
+                    else {
+                        return resolve(offlineNo)
+                    }
+                }
+                else {
+                    return resolve(offlineNo)
                 }
             })
             .catch(function (error) {
-                console.log(error);
-                return reject(error);
+                return resolve(1);
             });
     })
 }
@@ -118,8 +129,8 @@ let getDeviceList = (user) => {
 
 module.exports = {
     getUserCount,
-    getOfflineCount,
     createDevice,
     sendDataToServer,
     getDeviceList,
+    getTotalCount,
 }

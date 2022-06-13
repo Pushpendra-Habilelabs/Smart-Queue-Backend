@@ -13,60 +13,63 @@ const rfs = require('rotating-file-stream')
 const routes = require('./routes')
 const awsIot = require('aws-iot-device-sdk');
 
-let currentNumber = 1;
+let currentNumber = 0;
 
+// const device = awsIot.device({
+//     keyPath: 'assets/deviceCreation/puspendras20_Device3_Queue3_private.pem.key',
+//     certPath: 'assets/deviceCreation/puspendras20_Device3_Queue3_certificate.pem.crt',
+//     caPath: 'assets/currentCount/Q_AmazonRootCA1.pem',
+//     clientId: 'qms_device',
+//     host: 'a3n2130neve4if-ats.iot.eu-central-1.amazonaws.com'
+// });
 
-const device = awsIot.device({
-    keyPath: 'assets/currentCount/Q_private.pem.key',
-    certPath: 'assets/currentCount/Q_certificate.pem.crt',
-    caPath: 'assets/currentCount/Q_AmazonRootCA1.pem',
-    clientId: 'qms_device',
-    host: 'a3n2130neve4if-ats.iot.eu-central-1.amazonaws.com'
-});
-
-//
-// Device is an instance returned by mqtt.Client(z), see mqtt.js for full
-// documentation.
-//
-
-//connection acknowledgement
-device
-    .on('connect', function () {
-        console.log('connect');
-        device.subscribe('sahilshop1_9829873696');
-    });
+// device
+//     .on('connect', function () {
+//         console.log('connect');
+//         device.subscribe('puspendras20_device5_queue5');
+//     });
 
 //printing json
-device
-    .on('message', function (topic, payload) {
-        var jsonobj = payload.toString();
-        var myObj = JSON.parse(jsonobj);
-        currentNumber = myObj.Count;
-        console.log('****currentNumber*****');
-        console.log(currentNumber);
-        console.log('***********************');
-    });
-
-
-
-// Initialize wifi module
-// Absolutely necessary even to set interface to null
-// wifi.init({
-//     iface: null // network interface, choose a random wifi interface if set to null
-// });
-
-// // Connect to a network
-// wifi.connect({ ssid: 'Sahil', password: '12345678' }, () => {
-//     console.log('Wifi Connected');
-//     // on windows, the callback is called even if the connection failed due to netsh limitations
-//     // if your software may work on windows, you should use `wifi.getCurrentConnections` to check if the connection succeeded
-// });
-
+// device
+//     .on('message', function (topic, payload) {
+//         var jsonobj = payload.toString();
+//         var myObj = JSON.parse(jsonobj);
+//         currentNumber = myObj.Count;
+//         console.log('****currentNumber*****');
+//         console.log(currentNumber);
+//         console.log('***********************');
+//     });
 
 // create helper middleware so we can reuse server-sent events
 const useServerSentEventsMiddleware = (req, res, next) => {
+    let isConnected = false
+    const deviceName = req.params.device
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
+
+    const device = awsIot.device({
+        keyPath: `assets/deviceCreation/${deviceName}_private.pem.key`,
+        certPath: `assets/deviceCreation/${deviceName}_certificate.pem.crt`,
+        caPath: 'assets/currentCount/Q_AmazonRootCA1.pem',
+        clientId: 'qms_device',
+        host: 'a3n2130neve4if-ats.iot.eu-central-1.amazonaws.com'
+    });
+
+    device
+        .on('connect', function () {
+            console.log('connect');
+            device.subscribe(deviceName);
+            // device.publish(deviceName, JSON.stringify({ test_data: 1}));
+        });
+    device
+        .on('message', function (topic, payload) {
+            var jsonobj = payload.toString();
+            var myObj = JSON.parse(jsonobj);
+            currentNumber = myObj.Count;
+            console.log('****currentNumber*****');
+            console.log(currentNumber);
+            console.log('***********************');
+        });
 
     // only if you want anyone to access this endpoint
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -99,7 +102,7 @@ const streamRandomNumbers = (req, res) => {
     });
 }
 
-app.get('/current-token-number', useServerSentEventsMiddleware,
+app.get('/current-token-number/:device', useServerSentEventsMiddleware,
     streamRandomNumbers)
 
 const accessLogStream = rfs.createStream('access.log', {
