@@ -1,100 +1,26 @@
 const Message = require('../constants/error-message')
 const MessageCode = require('../constants/status-message')
-const { getUserCount, createDevice, sendDataToServer, getDeviceList, getOfflineCount, getTotalCount } = require('../modules')
 const { Response } = require('../utils')
-const moment = require('moment');
+const axios = require('axios');
 
-module.exports.userCount = async (req, res) => {
+module.exports.sendTurnSMS = async (req, res) => {
     try {
-        const { device } = req.params
-        const userCount = await getUserCount(device)
-        return Response.commonResponse(res, MessageCode.SUCCESS, Message.SUCCESS, userCount)
-    } catch (e) {
-        console.log(e);
-        return Response.commonResponse(res, MessageCode.INTERNAL_ERROR, Message.INTERNAL_SERVER)
-    }
-}
-
-module.exports.offlineCount = async (req, res) => {
-    try {
-        const { device } = req.params
-        const offlineCount = await getUserCount(device)
-        return Response.commonResponse(res, MessageCode.SUCCESS, Message.SUCCESS, offlineCount)
-    } catch (e) {
-        console.log(e);
-        return Response.commonResponse(res, MessageCode.INTERNAL_ERROR, Message.INTERNAL_SERVER)
-    }
-}
-
-module.exports.createDevice = async (req, res) => {
-    try {
-        const { device } = req.body
-        if (!device) {
-            return Response.commonResponse(res, MessageCode.BAD_REQUEST, Message.BAD_REQUEST)
-        }
-        await createDevice(device)
-        return Response.commonResponse(res, MessageCode.SUCCESS, Message.DEVICE_CREATED)
-    } catch (e) {
-        console.log(e);
-        return Response.commonResponse(res, MessageCode.INTERNAL_ERROR, Message.INTERNAL_SERVER)
-    }
-}
-
-module.exports.sendDataToServer = async (req, res) => {
-    try {
-        let userDetails = req.body
-        if (!userDetails) {
-            return Response.commonResponse(res, MessageCode.BAD_REQUEST, Message.BAD_REQUEST)
-        }
-        let userCount = await getUserCount(userDetails.deviceName)
-        userCount = Number(userCount)
-        if (userCount > 1) {
-            userCount + 1
-        }
-        userDetails.timeStamp = moment(new Date()).format('YYYY-MM-DD/HH:mm:ss')
-        userDetails.count = Number(userCount) + 1
-        await sendDataToServer(userDetails)
-        return Response.commonResponse(res, MessageCode.SUCCESS, Message.DETAILS_OBTAINED, userCount)
-    } catch (e) {
-        console.log(e);
-        return Response.commonResponse(res, MessageCode.INTERNAL_ERROR, Message.INTERNAL_SERVER)
-    }
-}
-
-module.exports.getDeviceList = async (req, res) => {
-    try {
-        let user = req.params.user
-        // let deviceList = []
-        // let queueList = []
-        const fetchList = await getDeviceList(user)
-
-        // if (fetchList && fetchList.length) {
-        //     fetchList.forEach(element => {
-        //         const device = element.slice(
-        //             element.indexOf('__') + 1,
-        //             element.lastIndexOf('--'),
-        //         );
-        //         deviceList.push(device)
-        //         const queue = element.slice(
-        //             element.indexOf('--') + 1,
-        //             element.lastIndexOf('.'),
-        //         );
-        //         queueList.push(queue)
-        //     });
-        // }
-
-        return Response.commonResponse(res, MessageCode.SUCCESS, Message.SUCCESS, fetchList)
-    } catch (e) {
-        console.log(e);
-        return Response.commonResponse(res, MessageCode.INTERNAL_ERROR, Message.INTERNAL_SERVER)
-    }
-}
-
-module.exports.getTotalCount = async (req, res) => {
-    try {
-        const { device } = req.params
-        const offlineCount = await getTotalCount(device)
-        return Response.commonResponse(res, MessageCode.SUCCESS, Message.SUCCESS, offlineCount)
+        const info = req.body
+        let message = `You'll have your turn in ${info.minutes} minutes, current number is ${info.currentNo} so please be ready at ${info.queueName}. - Queue Management Service by Habileabs.`
+        const data = {
+            "api-key": "A19b055702ac13e925677a3fe2e792c88",
+            "to": `91${info.mobile}`,
+            "type": "OTP",
+            "sender": "EXMSBK",
+            "template_id": "1007166210703101581",
+            "body": message
+        };
+        const res = await axios.post("https://api.kaleyra.io/v1/HXIN1701515598IN/messages", data);
+        if (res.response.status === 200)
+            console.log("Message send successfully")
+        else
+            console.log("Message send failed!");
+        return Response.commonResponse(res, MessageCode.SUCCESS, Message.SUCCESS, res)
     } catch (e) {
         console.log(e);
         return Response.commonResponse(res, MessageCode.INTERNAL_ERROR, Message.INTERNAL_SERVER)
